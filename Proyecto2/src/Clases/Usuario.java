@@ -24,4 +24,13 @@ public class Usuario {
     public boolean puedeLeer() {
         return true;
     }
+
+    public String getNombre() {
+        return nombre;
+    }
+
+    public boolean isEsAdmin() {
+        return esAdmin;
+    }
+    
 }
