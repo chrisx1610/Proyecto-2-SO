@@ -99,5 +99,26 @@ public class SistemaArchivos {
             }
         }
     }
+
+    public Directorio getRaiz() {
+        return raiz;
+    }
+
+    public Disco getDisco() {
+        return disco;
+    }
+
+    public TablaAsignacion getTablaAsignacion() {
+        return tablaAsignacion;
+    }
+
+    public PlanificadorDisco getPlanificador() {
+        return planificador;
+    }
+
+    public Usuario getUsuarioActual() {
+        return usuarioActual;
+    }
+    
 }
 
