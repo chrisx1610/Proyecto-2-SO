@@ -107,6 +107,14 @@ public class VentanaPrincipal extends JFrame {
         JButton btnSolicitarCrear = new JButton("Solicitar Crear Archivo");
         JButton btnSolicitarBorrar = new JButton("Solicitar Eliminar");
         JButton btnCrearCarpeta = new JButton("Crear Carpeta");
+        String[] politicas = {"FIFO", "SSTF", "SCAN", "C-SCAN"};
+JComboBox<String> comboPolitica = new JComboBox<>(politicas);
+comboPolitica.setSelectedItem(sistema.getPlanificador().getPolitica()); // Predeterminado
+comboPolitica.addActionListener(e -> {
+    String seleccion = (String) comboPolitica.getSelectedItem();
+    sistema.getPlanificador().setPolitica(seleccion);
+    JOptionPane.showMessageDialog(this, "Política de planificación cambiada a: " + seleccion);
+});
         
         // BOTÓN VERDE: Simula el CPU ejecutando el proceso
         JButton btnEjecutarPaso = new JButton("▶ EJECUTAR SIGUIENTE PROCESO");
@@ -124,6 +132,9 @@ public class VentanaPrincipal extends JFrame {
         panelHerramientas.add(btnSolicitarCrear);
         panelHerramientas.add(btnSolicitarBorrar);
         panelHerramientas.add(btnCrearCarpeta);
+        panelHerramientas.add(new JLabel("Política:"));
+panelHerramientas.add(comboPolitica);
+panelHerramientas.add(Box.createHorizontalStrut(10));
         panelHerramientas.add(Box.createHorizontalStrut(20)); // Separador
         panelHerramientas.add(btnEjecutarPaso);
         
@@ -381,31 +392,39 @@ public class VentanaPrincipal extends JFrame {
     }
     
     private void abrirDialogoEliminar() {
-        JTextField campoNombre = new JTextField();
-        // Selector de Ruta para saber dónde borrar
-        JComboBox<String> comboRutas = new JComboBox<>();
-        llenarComboRutas(comboRutas, sistema.getRaiz());
-        
-        Object[] mensaje = { 
-            "Ubicación del archivo:", comboRutas, 
-            "Nombre a eliminar:", campoNombre 
-        };
-        
-        int op = JOptionPane.showConfirmDialog(this, mensaje, "Eliminar Archivo", JOptionPane.OK_CANCEL_OPTION);
-        if (op == JOptionPane.OK_OPTION) {
-            String nombre = campoNombre.getText();
-            String ruta = (String) comboRutas.getSelectedItem();
-            
-            if (nombre != null && !nombre.isEmpty()) {
-                int nuevoId = (int)(Math.random() * 1000);
+    JTextField campoNombre = new JTextField();
+    JComboBox<String> comboRutas = new JComboBox<>();
+    llenarComboRutas(comboRutas, sistema.getRaiz());
+
+    Object[] mensaje = { 
+        "Ubicación del archivo:", comboRutas, 
+        "Nombre a eliminar:", campoNombre 
+    };
+
+    int op = JOptionPane.showConfirmDialog(this, mensaje, "Eliminar Archivo", JOptionPane.OK_CANCEL_OPTION);
+    if (op == JOptionPane.OK_OPTION) {
+        String nombre = campoNombre.getText();
+        String ruta = (String) comboRutas.getSelectedItem();
+
+        if (nombre != null && !nombre.isEmpty()) {
+            int nuevoId = (int)(Math.random() * 1000);
+
+            // 🔹 Buscar primer bloque del archivo
+            NodoAsignacion nodo = sistema.getTablaAsignacion().buscar(nombre);
+            if (nodo != null) {
                 Proceso p = new Proceso(nuevoId, "ELIMINAR", nombre, sistema.getUsuarioActual());
                 p.setRutaDestino(ruta);
-                
+                p.setCilindro(nodo.getPrimerBloque()); // 🔑 clave para SSTF
                 sistema.getPlanificador().agregarProceso(p);
                 actualizarTodo();
+                JOptionPane.showMessageDialog(this, "Solicitud enviada a la cola (ID: " + nuevoId + ")");
+            } else {
+                JOptionPane.showMessageDialog(this, "Archivo no encontrado en disco.");
             }
         }
     }
+}
+
     
     private void cambiarUsuario() {
         String[] opciones = {"Administrador", "Usuario1", "Usuario2"};
