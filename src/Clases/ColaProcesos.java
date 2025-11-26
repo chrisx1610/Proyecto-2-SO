@@ -34,11 +34,10 @@ public class ColaProcesos {
         return p;
     }
     
-    // === ESTE ES EL MÉTODO QUE TE FALTARÁ LUEGO ===
+
     public boolean estaVacia() {
         return frente == null;
     }
-    // ==============================================
     
     public NodoProceso getFrente() {
         return frente;
@@ -47,4 +46,30 @@ public class ColaProcesos {
     public int getTamano() {
         return tamano;
     }
+
+    public Proceso getProceso(int indice) {
+    if (indice < 0 || indice >= tamano) return null;
+    NodoProceso actual = frente;
+    for (int i = 0; i < indice; i++) {
+        actual = actual.siguiente;
+    }
+    return actual.proceso;
+}
+
+
+    public Proceso removerPorIndice(int indice) {
+    if (indice < 0 || indice >= tamano) return null;
+    if (indice == 0) {
+        return desencolar(); // Remover del frente
+    }
+    NodoProceso actual = frente;
+    for (int i = 0; i < indice - 1; i++) {
+        actual = actual.siguiente;
+    }
+    Proceso p = actual.siguiente.proceso;
+    actual.siguiente = actual.siguiente.siguiente;
+    if (actual.siguiente == null) fin = actual;
+    tamano--;
+    return p;
+}
 }
