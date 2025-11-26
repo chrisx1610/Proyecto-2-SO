@@ -6,9 +6,9 @@ package Clases;
 
 public class Proceso {
     private int id;
-    private String tipoOperacion; // "CREAR", "LEER", "ELIMINAR", "MODIFICAR", "CREAR_DIR"
+    private String tipoOperacion; 
     private String nombreArchivo;
-    private String estado; // "NUEVO", "LISTO", "EJECUTANDO", "BLOQUEADO", "TERMINADO"
+    private String estado; 
     
     // Atributos base
     private Usuario propietario; 
@@ -17,6 +17,9 @@ public class Proceso {
     // NUEVOS ATRIBUTOS (Para que la simulación sepa dónde crear y de qué color)
     private String rutaDestino;
     private String colorAsociado;
+
+    // NUEVO ATRIBUTO PARA PLANIFICACIÓN DE DISCO
+    private int cilindro; // Número de cilindro del disco para este proceso (para SSTF, SCAN, C-SCAN)
 
     // Constructor principal
     public Proceso(int id, String tipo, String archivo, Usuario propietario) {
@@ -28,6 +31,7 @@ public class Proceso {
         this.tamano = 0;
         this.rutaDestino = "root"; // Valor por defecto
         this.colorAsociado = "Gris"; // Valor por defecto
+        this.cilindro = 0; // Valor por defecto (puedes cambiarlo según necesidad)
     }
     
     // Constructor sobrecargado para CREAR (incluye tamaño)
@@ -36,7 +40,12 @@ public class Proceso {
         this.tamano = tamano;
     }
 
-    // === MÉTODOS DE ESTADO (Los que te daban error) ===
+    // NUEVO CONSTRUCTOR SOBRECARGADO PARA INCLUIR CILINDRO
+    public Proceso(int id, String tipo, String archivo, Usuario propietario, int tamano, int cilindro) {
+        this(id, tipo, archivo, propietario, tamano);
+        this.cilindro = cilindro;
+    }
+
 
     public void aListo() {
         this.estado = "LISTO";
@@ -69,6 +78,10 @@ public class Proceso {
 
     public String getColorAsociado() { return colorAsociado; }
     public void setColorAsociado(String colorAsociado) { this.colorAsociado = colorAsociado; }
+
+
+    public int getCilindro() { return cilindro; }
+    public void setCilindro(int cilindro) { this.cilindro = cilindro; }
 
     @Override
     public String toString() {
