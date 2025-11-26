@@ -1,6 +1,6 @@
 /*
  * VentanaPrincipal.java
- * Simulador de Sistema de Archivos con Interfaz Gráfica
+ * Simulador de Sistema de Archivos con Interfaz Gráfica (Final Definitivo)
  */
 package Clases;
 
@@ -9,6 +9,7 @@ import javax.swing.table.DefaultTableModel;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import java.awt.*;
+import java.io.File;
 
 public class VentanaPrincipal extends JFrame {
 
@@ -41,8 +42,8 @@ public class VentanaPrincipal extends JFrame {
         sistema.iniciarSesion(admin);
 
         // 2. Configuración Ventana
-        setTitle("Simulador SO - Gestión de Archivos y Procesos");
-        setSize(1100, 750);
+        setTitle("Simulador SO - Proyecto Final");
+        setSize(1350, 780); // Ajustado para que quepan todos los botones cómodamente
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLayout(new BorderLayout(10, 10));
         setLocationRelativeTo(null); // Centrar en pantalla
@@ -57,8 +58,8 @@ public class VentanaPrincipal extends JFrame {
         modeloArbol = new DefaultTreeModel(new DefaultMutableTreeNode("root"));
         arbolVisual = new JTree(modeloArbol);
         JScrollPane scrollArbol = new JScrollPane(arbolVisual);
-        scrollArbol.setPreferredSize(new Dimension(200, 0));
-        scrollArbol.setBorder(BorderFactory.createTitledBorder("Directorios"));
+        scrollArbol.setPreferredSize(new Dimension(240, 0));
+        scrollArbol.setBorder(BorderFactory.createTitledBorder("Explorador de Directorios"));
         add(scrollArbol, BorderLayout.WEST);
 
         // --- PANEL CENTRAL: DISCO Y TABLAS ---
@@ -67,7 +68,7 @@ public class VentanaPrincipal extends JFrame {
         // 1. Simulación de Disco (SD) - Arriba
         panelDisco = new JPanel();
         int totalBloques = sistema.getDisco().getTotalBloques();
-        int filas = (int) Math.sqrt(totalBloques); // Calcular filas para que sea cuadrado
+        int filas = (int) Math.sqrt(totalBloques); 
         panelDisco.setLayout(new GridLayout(filas, 0, 2, 2));
         panelDisco.setBorder(BorderFactory.createTitledBorder("Simulación de Disco (SD)"));
         
@@ -77,7 +78,7 @@ public class VentanaPrincipal extends JFrame {
             botonesBloques[i].setBackground(COLOR_LIBRE);
             botonesBloques[i].setOpaque(true);
             botonesBloques[i].setBorderPainted(false);
-            botonesBloques[i].setFont(new Font("Arial", Font.PLAIN, 9));
+            botonesBloques[i].setFont(new Font("Arial", Font.PLAIN, 10));
             panelDisco.add(botonesBloques[i]);
         }
         panelCentro.add(panelDisco);
@@ -100,31 +101,76 @@ public class VentanaPrincipal extends JFrame {
 
         add(panelCentro, BorderLayout.CENTER);
 
-        // --- BARRA SUPERIOR: BOTONES DE ACCIÓN ---
-        JPanel panelHerramientas = new JPanel();
+        // --- BARRA SUPERIOR: HERRAMIENTAS (BOTONES) ---
+        JPanel panelHerramientas = new JPanel(new FlowLayout(FlowLayout.LEFT));
         
-        JButton btnLogin = new JButton("Cambiar Usuario");
-        JButton btnSolicitarCrear = new JButton("Solicitar Crear Archivo");
-        JButton btnSolicitarBorrar = new JButton("Solicitar Eliminar");
-        JButton btnCrearCarpeta = new JButton("Crear Carpeta");
+        // Grupo 1: Usuario
+        JButton btnLogin = new JButton("👤 Usuario");
+        btnLogin.setToolTipText("Cambiar de usuario (Admin/User)");
         
-        // BOTÓN VERDE: Simula el CPU ejecutando el proceso
-        JButton btnEjecutarPaso = new JButton("▶ EJECUTAR SIGUIENTE PROCESO");
+        // Grupo 2: Archivos
+        JButton btnSolicitarCrear = new JButton("➕ Archivo");
+        JButton btnRenombrar = new JButton("✏ Renombrar"); 
+        JButton btnSolicitarBorrar = new JButton("❌ Archivo");
+        
+        // Grupo 3: Carpetas
+        JButton btnCrearCarpeta = new JButton("📁 Carpeta");
+        JButton btnBorrarCarpeta = new JButton("🗑 Carpeta"); 
+        
+        // Grupo 4: Persistencia
+        JButton btnGuardar = new JButton("💾 Guardar");
+        JButton btnCargar = new JButton("📂 Cargar");
+        
+        // Grupo 5: Planificación
+        JLabel lblPolitica = new JLabel("Política:");
+        String[] politicas = {"FIFO", "LIFO", "PRIORIDAD", "SJF"};
+        JComboBox<String> comboPolitica = new JComboBox<>(politicas);
+        
+        JButton btnEjecutarPaso = new JButton("▶ EJECUTAR PROCESO");
         btnEjecutarPaso.setBackground(new Color(144, 238, 144)); 
-        btnEjecutarPaso.setFont(new Font("Arial", Font.BOLD, 12));
+        btnEjecutarPaso.setFont(new Font("Arial", Font.BOLD, 11));
 
-        // Asignar Eventos
+        // --- ASIGNACIÓN DE EVENTOS ---
         btnLogin.addActionListener(e -> cambiarUsuario());
+        
         btnSolicitarCrear.addActionListener(e -> abrirDialogoCrearArchivo());
+        btnRenombrar.addActionListener(e -> abrirDialogoRenombrar());
         btnSolicitarBorrar.addActionListener(e -> abrirDialogoEliminar());
+        
         btnCrearCarpeta.addActionListener(e -> abrirDialogoCrearCarpeta());
+        btnBorrarCarpeta.addActionListener(e -> abrirDialogoEliminarCarpeta());
+        
         btnEjecutarPaso.addActionListener(e -> procesarSiguienteEnCola());
+        
+        comboPolitica.addActionListener(e -> {
+            String seleccion = (String) comboPolitica.getSelectedItem();
+            sistema.getPlanificador().setPolitica(seleccion);
+        });
 
+        btnGuardar.addActionListener(e -> accionGuardar());
+        btnCargar.addActionListener(e -> accionCargar());
+
+        // --- AGREGAR AL PANEL ---
         panelHerramientas.add(btnLogin);
+        panelHerramientas.add(Box.createHorizontalStrut(10)); // Separador
+        
         panelHerramientas.add(btnSolicitarCrear);
+        panelHerramientas.add(btnRenombrar);
         panelHerramientas.add(btnSolicitarBorrar);
+        panelHerramientas.add(Box.createHorizontalStrut(10));
+        
         panelHerramientas.add(btnCrearCarpeta);
-        panelHerramientas.add(Box.createHorizontalStrut(20)); // Separador
+        panelHerramientas.add(btnBorrarCarpeta);
+        panelHerramientas.add(Box.createHorizontalStrut(10));
+        
+        panelHerramientas.add(btnGuardar);
+        panelHerramientas.add(btnCargar);
+        panelHerramientas.add(Box.createHorizontalStrut(15));
+        
+        panelHerramientas.add(lblPolitica);
+        panelHerramientas.add(comboPolitica);
+        panelHerramientas.add(Box.createHorizontalStrut(10));
+        
         panelHerramientas.add(btnEjecutarPaso);
         
         add(panelHerramientas, BorderLayout.NORTH);
@@ -135,7 +181,7 @@ public class VentanaPrincipal extends JFrame {
     // ==========================================================
 
     private void procesarSiguienteEnCola() {
-        // 1. Pedir el siguiente proceso al planificador
+        // 1. Pedir el siguiente proceso al planificador (YA APLICA LA POLÍTICA SELECCIONADA)
         Proceso p = sistema.getPlanificador().siguienteProceso();
         
         if (p == null) {
@@ -144,15 +190,13 @@ public class VentanaPrincipal extends JFrame {
         }
 
         // 2. Preparar datos (Ruta y Color)
-        // Usamos validaciones por si acaso vienen nulos
         String ruta = (p.getRutaDestino() != null) ? p.getRutaDestino() : "root";
         String color = (p.getColorAsociado() != null) ? p.getColorAsociado() : "Gris";
         String resultado = "";
 
-        // 3. Ejecutar acción real
+        // 3. Ejecutar acción real según el tipo
         switch (p.getTipoOperacion()) {
             case "CREAR":
-                // Llamamos al sistema pasando ruta, nombre, tamaño y COLOR
                 resultado = sistema.crearArchivo(ruta, p.getNombreArchivo(), p.getTamano(), color); 
                 break;
                 
@@ -160,11 +204,13 @@ public class VentanaPrincipal extends JFrame {
                 resultado = sistema.eliminarArchivo(ruta, p.getNombreArchivo());
                 break;
                 
+            case "ELIMINAR_DIR": // Borrado recursivo de carpeta
+                resultado = sistema.eliminarDirectorio(ruta, p.getNombreArchivo());
+                break;
+                
             case "CREAR_DIR":
-                 // Buscar la carpeta padre para meter la nueva carpeta
                  Directorio dirPadre = sistema.buscarDirectorioPorRuta(ruta);
                  if(dirPadre != null) {
-                     // Validar duplicados
                      if (dirPadre.getSubdirectorios().buscar(p.getNombreArchivo()) == null) {
                          Directorio nuevo = new Directorio(p.getNombreArchivo());
                          dirPadre.agregarSubdirectorio(nuevo);
@@ -183,7 +229,9 @@ public class VentanaPrincipal extends JFrame {
         actualizarTodo(); // Refrescar visuales
         
         JOptionPane.showMessageDialog(this, 
-            "Proceso " + p.getId() + " (" + p.getTipoOperacion() + ") Finalizado.\nResultado: " + resultado);
+            "Proceso " + p.getId() + " (" + p.getTipoOperacion() + ") Finalizado.\n" +
+            "Política: " + sistema.getPlanificador().getPolitica() + "\n" +
+            "Resultado: " + resultado);
     }
 
     // ==========================================================
@@ -201,11 +249,9 @@ public class VentanaPrincipal extends JFrame {
         modeloTablaProcesos.setRowCount(0); // Limpiar tabla
         ColaProcesos cola = sistema.getPlanificador().getCola();
         
-        // Recorremos sin borrar usando el nodo frente
         NodoProceso actual = cola.getFrente();
         while (actual != null) {
-            Proceso p = actual.proceso; // Asumiendo que el nodo tiene acceso público a proceso
-            // O si el atributo es package-private en NodoProceso, esto funciona si estamos en mismo paquete
+            Proceso p = actual.proceso; 
             Object[] fila = {
                 p.getId(),
                 p.getTipoOperacion(),
@@ -304,7 +350,6 @@ public class VentanaPrincipal extends JFrame {
         JTextField campoNombre = new JTextField();
         JTextField campoTamano = new JTextField();
         
-        // Selector de Ruta (Arreglo del problema de carpetas)
         JComboBox<String> comboRutas = new JComboBox<>();
         llenarComboRutas(comboRutas, sistema.getRaiz());
         
@@ -313,7 +358,7 @@ public class VentanaPrincipal extends JFrame {
 
         Object[] mensaje = {
             "Seleccione Carpeta:", comboRutas,
-            "Nombre Archivo (con extensión):", campoNombre,
+            "Nombre Archivo:", campoNombre,
             "Tamaño (bloques):", campoTamano,
             "Color:", comboColor
         };
@@ -328,82 +373,99 @@ public class VentanaPrincipal extends JFrame {
                 
                 int nuevoId = (int)(Math.random() * 1000);
                 
-                // Crear proceso y asignarle color y ruta
                 Proceso p = new Proceso(nuevoId, "CREAR", nombre, sistema.getUsuarioActual(), tamano);
                 p.setRutaDestino(ruta);
                 p.setColorAsociado(color);
                 
                 sistema.getPlanificador().agregarProceso(p);
-                
-                JOptionPane.showMessageDialog(this, "Solicitud enviada a la cola (ID: " + nuevoId + ")");
+                JOptionPane.showMessageDialog(this, "Solicitud en cola (ID: " + nuevoId + ")");
                 actualizarTodo();
                 
-            } catch (NumberFormatException ex) {
-                JOptionPane.showMessageDialog(this, "El tamaño debe ser un número entero.");
             } catch (Exception ex) {
-                JOptionPane.showMessageDialog(this, "Error: " + ex.getMessage());
+                JOptionPane.showMessageDialog(this, "Error en datos: " + ex.getMessage());
             }
         }
     }
     
     private void abrirDialogoCrearCarpeta() {
         JTextField campoNombre = new JTextField();
-        
-        // Selector de Ruta Padre
         JComboBox<String> comboRutas = new JComboBox<>();
         llenarComboRutas(comboRutas, sistema.getRaiz());
         
-        Object[] mensaje = {
-            "Carpeta Padre:", comboRutas,
-            "Nombre Nueva Carpeta:", campoNombre
-        };
+        Object[] mensaje = { "Carpeta Padre:", comboRutas, "Nombre Nueva Carpeta:", campoNombre };
 
-        int op = JOptionPane.showConfirmDialog(this, mensaje, "Nuevo Proceso: Crear Directorio", JOptionPane.OK_CANCEL_OPTION);
-        if (op == JOptionPane.OK_OPTION) {
-            try {
-                String nombre = campoNombre.getText();
-                String ruta = (String) comboRutas.getSelectedItem();
-                
-                int nuevoId = (int)(Math.random() * 1000);
-                
-                Proceso p = new Proceso(nuevoId, "CREAR_DIR", nombre, sistema.getUsuarioActual(), 0);
-                p.setRutaDestino(ruta);
-                p.setColorAsociado("Gris"); // Color irrelevante para carpetas
-                
-                sistema.getPlanificador().agregarProceso(p);
-                
-                JOptionPane.showMessageDialog(this, "Solicitud enviada a la cola (ID: " + nuevoId + ")");
-                actualizarTodo();
-            } catch (Exception ex) {
-                JOptionPane.showMessageDialog(this, "Error al crear solicitud.");
-            }
+        if (JOptionPane.showConfirmDialog(this, mensaje, "Crear Carpeta", JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) {
+            String nombre = campoNombre.getText();
+            String ruta = (String) comboRutas.getSelectedItem();
+            
+            Proceso p = new Proceso((int)(Math.random() * 1000), "CREAR_DIR", nombre, sistema.getUsuarioActual(), 0);
+            p.setRutaDestino(ruta);
+            p.setColorAsociado("Gris");
+            
+            sistema.getPlanificador().agregarProceso(p);
+            actualizarTodo();
         }
     }
     
     private void abrirDialogoEliminar() {
         JTextField campoNombre = new JTextField();
-        // Selector de Ruta para saber dónde borrar
+        JComboBox<String> comboRutas = new JComboBox<>();
+        llenarComboRutas(comboRutas, sistema.getRaiz());
+        
+        Object[] mensaje = { "Ubicación:", comboRutas, "Nombre Archivo:", campoNombre };
+        
+        if (JOptionPane.showConfirmDialog(this, mensaje, "Eliminar Archivo", JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) {
+            String nombre = campoNombre.getText();
+            if (!nombre.isEmpty()) {
+                Proceso p = new Proceso((int)(Math.random() * 1000), "ELIMINAR", nombre, sistema.getUsuarioActual());
+                p.setRutaDestino((String) comboRutas.getSelectedItem());
+                sistema.getPlanificador().agregarProceso(p);
+                actualizarTodo();
+            }
+        }
+    }
+
+    private void abrirDialogoEliminarCarpeta() {
+        JComboBox<String> comboRutas = new JComboBox<>();
+        llenarComboRutas(comboRutas, sistema.getRaiz());
+        JTextField campoNombre = new JTextField();
+        
+        Object[] mensaje = { "Ubicación Padre:", comboRutas, "Nombre Carpeta a Borrar:", campoNombre };
+
+        if (JOptionPane.showConfirmDialog(this, mensaje, "Eliminar Carpeta (Recursivo)", JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) {
+            String nombre = campoNombre.getText();
+            if (!nombre.isEmpty()) {
+                Proceso p = new Proceso((int)(Math.random() * 1000), "ELIMINAR_DIR", nombre, sistema.getUsuarioActual());
+                p.setRutaDestino((String) comboRutas.getSelectedItem());
+                sistema.getPlanificador().agregarProceso(p);
+                actualizarTodo();
+            }
+        }
+    }
+
+    // Diálogo de Acción Directa (Renombrar no necesita pasar por cola, suele ser operación metadata rápida)
+    // Pero para ser estrictos, si quisieras proceso, podrías crear uno tipo "MODIFICAR".
+    // Aquí lo dejaremos directo como admin tool rápida.
+    private void abrirDialogoRenombrar() {
+        JTextField campoViejo = new JTextField();
+        JTextField campoNuevo = new JTextField();
         JComboBox<String> comboRutas = new JComboBox<>();
         llenarComboRutas(comboRutas, sistema.getRaiz());
         
         Object[] mensaje = { 
-            "Ubicación del archivo:", comboRutas, 
-            "Nombre a eliminar:", campoNombre 
+            "Ubicación:", comboRutas, 
+            "Nombre Actual:", campoViejo,
+            "Nuevo Nombre:", campoNuevo
         };
         
-        int op = JOptionPane.showConfirmDialog(this, mensaje, "Eliminar Archivo", JOptionPane.OK_CANCEL_OPTION);
-        if (op == JOptionPane.OK_OPTION) {
-            String nombre = campoNombre.getText();
-            String ruta = (String) comboRutas.getSelectedItem();
-            
-            if (nombre != null && !nombre.isEmpty()) {
-                int nuevoId = (int)(Math.random() * 1000);
-                Proceso p = new Proceso(nuevoId, "ELIMINAR", nombre, sistema.getUsuarioActual());
-                p.setRutaDestino(ruta);
-                
-                sistema.getPlanificador().agregarProceso(p);
-                actualizarTodo();
-            }
+        if (JOptionPane.showConfirmDialog(this, mensaje, "Renombrar Archivo (Admin)", JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) {
+            String res = sistema.renombrarArchivo(
+                (String)comboRutas.getSelectedItem(), 
+                campoViejo.getText(), 
+                campoNuevo.getText()
+            );
+            JOptionPane.showMessageDialog(this, res);
+            actualizarTodo();
         }
     }
     
@@ -414,9 +476,46 @@ public class VentanaPrincipal extends JFrame {
                 
         if (seleccion != null) {
             boolean esAdmin = seleccion.equals("Administrador");
-            Usuario nuevoUsuario = new Usuario(seleccion, esAdmin);
-            sistema.iniciarSesion(nuevoUsuario);
+            sistema.iniciarSesion(new Usuario(seleccion, esAdmin));
             JOptionPane.showMessageDialog(this, "Sesión iniciada como: " + seleccion);
+        }
+    }
+
+    private void accionGuardar() {
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setDialogTitle("Guardar estado del sistema");
+        int userSelection = fileChooser.showSaveDialog(this);
+        
+        if (userSelection == JFileChooser.APPROVE_OPTION) {
+            File fileToSave = fileChooser.getSelectedFile();
+            String path = fileToSave.getAbsolutePath();
+            if (!path.toLowerCase().endsWith(".csv")) {
+                path += ".csv";
+            }
+            
+            try {
+                sistema.guardarSistema(path);
+                JOptionPane.showMessageDialog(this, "Sistema guardado correctamente.");
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(this, "Error al guardar: " + ex.getMessage());
+            }
+        }
+    }
+
+    private void accionCargar() {
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setDialogTitle("Cargar estado del sistema");
+        int userSelection = fileChooser.showOpenDialog(this);
+        
+        if (userSelection == JFileChooser.APPROVE_OPTION) {
+            File fileToLoad = fileChooser.getSelectedFile();
+            try {
+                sistema.cargarSistema(fileToLoad.getAbsolutePath());
+                actualizarTodo(); 
+                JOptionPane.showMessageDialog(this, "Sistema cargado correctamente.");
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(this, "Error al cargar: " + ex.getMessage());
+            }
         }
     }
 

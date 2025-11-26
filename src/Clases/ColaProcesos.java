@@ -6,7 +6,7 @@ package Clases;
 
 public class ColaProcesos {
     private NodoProceso frente, fin;
-    private int tamano; 
+    private int tamano;
 
     public ColaProcesos() {
         this.frente = null;
@@ -25,7 +25,7 @@ public class ColaProcesos {
         tamano++;
     }
 
-    public Proceso desencolar() {
+    public Proceso desencolar() { // FIFO normal
         if (frente == null) return null;
         Proceso p = frente.proceso;
         frente = frente.siguiente;
@@ -34,17 +34,35 @@ public class ColaProcesos {
         return p;
     }
     
-    // === ESTE ES EL MÉTODO QUE TE FALTARÁ LUEGO ===
-    public boolean estaVacia() {
-        return frente == null;
+    // === NUEVO: MÉTODOS PARA OTRAS POLÍTICAS ===
+
+    // Extrae un proceso específico de la cola (necesario para Prioridad y SJF)
+    public boolean removerProceso(Proceso pObjetivo) {
+        if (frente == null) return false;
+
+        // Caso 1: Es el primero
+        if (frente.proceso == pObjetivo) {
+            frente = frente.siguiente;
+            if (frente == null) fin = null;
+            tamano--;
+            return true;
+        }
+
+        // Caso 2: Buscar en el resto
+        NodoProceso actual = frente;
+        while (actual.siguiente != null) {
+            if (actual.siguiente.proceso == pObjetivo) {
+                actual.siguiente = actual.siguiente.siguiente; // Saltar el nodo
+                if (actual.siguiente == null) fin = actual; // Actualizar fin si borramos el último
+                tamano--;
+                return true;
+            }
+            actual = actual.siguiente;
+        }
+        return false;
     }
-    // ==============================================
-    
-    public NodoProceso getFrente() {
-        return frente;
-    }
-    
-    public int getTamano() {
-        return tamano;
-    }
+
+    public NodoProceso getFrente() { return frente; }
+    public boolean estaVacia() { return frente == null; }
+    public int getTamano() { return tamano; }
 }

@@ -4,48 +4,111 @@
  */
 package Clases;
 
-/**
- * Gestionar la cola de procesos de E/S.
- */
 public class PlanificadorDisco {
-    private String politica; // "FIFO", "SSTF", etc.
+    private String politica; // "FIFO", "LIFO", "PRIORIDAD", "SJF"
     private ColaProcesos cola;
-    private boolean pausado; // Para controlar la simulación en la GUI
 
     public PlanificadorDisco(String politica) {
         this.politica = politica;
         this.cola = new ColaProcesos();
-        this.pausado = false;
     }
 
     public void agregarProceso(Proceso p) {
         p.setEstado("LISTO");
         cola.encolar(p);
-        System.out.println("Planificador: Proceso agregado [" + p.getId() + "]");
     }
 
     public Proceso siguienteProceso() {
         if (cola.estaVacia()) return null;
 
-        // Aquí iría la lógica si fuera SSTF o SCAN.
-        // Por ahora, implementamos FIFO (First In, First Out) por defecto.
-        
-        Proceso p = cola.desencolar();
-        if (p != null) {
-            p.setEstado("EJECUTANDO");
+        Proceso seleccionado = null;
+
+        switch (politica) {
+            case "FIFO":
+                seleccionado = cola.desencolar();
+                break;
+
+            case "LIFO":
+                seleccionado = obtenerLIFO();
+                break;
+
+            case "PRIORIDAD":
+                seleccionado = obtenerPrioridad();
+                break;
+                
+            case "SJF": // Shortest Job First (Por tamaño)
+                seleccionado = obtenerSJF();
+                break;
+                
+            default:
+                seleccionado = cola.desencolar(); // FIFO por defecto
         }
-        return p;
+
+        if (seleccionado != null) {
+            seleccionado.setEstado("EJECUTANDO");
+        }
+        return seleccionado;
     }
     
-    public ColaProcesos getCola() {
-        return cola;
+    // --- ALGORITMOS ---
+
+    private Proceso obtenerLIFO() {
+        // En una lista enlazada simple, el último es costoso de sacar.
+        // Recorremos hasta el final.
+        NodoProceso actual = cola.getFrente();
+        Proceso ultimo = null;
+        
+        while(actual != null) {
+            ultimo = actual.proceso;
+            actual = actual.siguiente;
+        }
+        
+        // Lo sacamos de la cola
+        if(ultimo != null) cola.removerProceso(ultimo);
+        return ultimo;
     }
 
-    public String getPolitica() {
-        return politica;
+    private Proceso obtenerPrioridad() {
+        // Regla: Admin va primero. Si no hay admin, FIFO normal.
+        NodoProceso actual = cola.getFrente();
+        Proceso candidato = null;
+        
+        while(actual != null) {
+            if (actual.proceso.getPropietario().isEsAdmin()) {
+                candidato = actual.proceso;
+                break; // Encontramos el primer admin, nos lo llevamos
+            }
+            actual = actual.siguiente;
+        }
+        
+        // Si no hubo admin, tomamos el primero (FIFO)
+        if (candidato == null) {
+            return cola.desencolar();
+        } else {
+            cola.removerProceso(candidato);
+            return candidato;
+        }
+    }
+    
+    private Proceso obtenerSJF() {
+        // Regla: El proceso con MENOR tamaño (tamanoEnBloques) va primero.
+        NodoProceso actual = cola.getFrente();
+        Proceso candidato = actual.proceso;
+        int menorTamano = candidato.getTamano();
+        
+        while(actual != null) {
+            if (actual.proceso.getTamano() < menorTamano) {
+                menorTamano = actual.proceso.getTamano();
+                candidato = actual.proceso;
+            }
+            actual = actual.siguiente;
+        }
+        
+        cola.removerProceso(candidato);
+        return candidato;
     }
 
-    public void setPolitica(String politica) {
-        this.politica = politica;
-    }
+    public ColaProcesos getCola() { return cola; }
+    public void setPolitica(String politica) { this.politica = politica; }
+    public String getPolitica() { return politica; }
 }
